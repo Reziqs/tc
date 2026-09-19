@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Digital Clock</title>
+<style>
+  :root {
+    --red: #ff0808;
+    /*
+      The whole clock is sized from the available viewport width.
+      This keeps all 8 characters inside the screen on different
+      phone/tablet/desktop resolutions.
+    */
+    --clock-width: min(94vw, 1800px);
+    --cell: calc(var(--clock-width) / 82);
+    --gap: calc(var(--cell) * 0.18);
+    --digit-gap: calc(var(--cell) * 1.25);
+    --colon-gap: calc(var(--cell) * 0.85);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+  }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .clock {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    padding: 5vw;
+  }
+
+  .digits {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--clock-width);
+    max-width: 100%;
+    gap: var(--digit-gap);
+    flex-shrink: 1;
+  }
+
+  .digit {
+    display: grid;
+    grid-template-columns: repeat(5, var(--cell));
+    grid-template-rows: repeat(7, var(--cell));
+    gap: var(--gap);
+    flex: 0 0 auto;
+  }
+
+  .pixel {
+    width: var(--cell);
+    height: var(--cell);
+  }
+
+  .pixel.on {
+    background: var(--red);
+  }
+
+  .colon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(20px, 4vw, 65px);
+    width: var(--cell);
+    flex: 0 0 auto;
+    margin-left: var(--colon-gap);
+    margin-right: var(--colon-gap);
+  }
+
+  .colon span {
+    width: var(--cell);
+    height: var(--cell);
+    background: var(--red);
+  }
+
+  /* Landscape: use the smaller of width and height so the clock
+     never gets clipped on unusual aspect ratios. */
+  @media (orientation: landscape) {
+    :root {
+      --clock-width: min(94vw, 1800px, calc(100vh * 3.9));
+      --cell: calc(var(--clock-width) / 82);
+      --gap: calc(var(--cell) * 0.18);
+      --digit-gap: calc(var(--cell) * 1.05);
+      --colon-gap: calc(var(--cell) * 0.72);
+    }
+  }
+
+  /* Portrait: keep it inside the viewport and rotate the display. */
+  @media (orientation: portrait) {
+    :root {
+      --clock-width: min(94vh, 1800px);
+      --cell: calc(var(--clock-width) / 82);
+      --gap: calc(var(--cell) * 0.18);
+      --digit-gap: calc(var(--cell) * 1.0);
+      --colon-gap: calc(var(--cell) * 0.7);
+    }
+
+    .clock {
+      padding: 2vw;
+    }
+
+    .digits {
+      transform: rotate(90deg);
+    }
+  }
+</style>
+</head>
+
+<body>
+  <div class="clock">
+    <div id="digits" class="digits" aria-label="Current time"></div>
+  </div>
+
+<script>
+const patterns = {
+  "0": ["11111","10001","10001","10001","10001","10001","11111"],
+  "1": ["00100","01100","00100","00100","00100","00100","01110"],
+  "2": ["11111","00001","00001","11111","10000","10000","11111"],
+  "3": ["11111","00001","00001","11111","00001","00001","11111"],
+  "4": ["10001","10001","10001","11111","00001","00001","00001"],
+  "5": ["11111","10000","10000","11111","00001","00001","11111"],
+  "6": ["11111","10000","10000","11111","10001","10001","11111"],
+  "7": ["11111","00001","00010","00100","00100","00100","00100"],
+  "8": ["11111","10001","10001","11111","10001","10001","11111"],
+  "9": ["11111","10001","10001","11111","00001","00001","11111"]
+};
+
+const digits = document.getElementById("digits");
+
+function makeDigit(value) {
+  const el = document.createElement("div");
+  el.className = "digit";
+
+  for (const row of patterns[value]) {
+    for (const bit of row) {
+      const pixel = document.createElement("div");
+      pixel.className = "pixel" + (bit === "1" ? " on" : "");
+      el.appendChild(pixel);
+    }
+  }
+
+  return el;
+}
+
+function makeColon() {
+  const el = document.createElement("div");
+  el.className = "colon";
+  el.innerHTML = "<span></span><span></span>";
+  return el;
+}
+
+function drawClock() {
+  const now = new Date();
+
+  const time =
+    String(now.getHours()).padStart(2, "0") +
+    String(now.getMinutes()).padStart(2, "0") +
+    String(now.getSeconds()).padStart(2, "0");
+
+  digits.replaceChildren(
+    makeDigit(time[0]),
+    makeDigit(time[1]),
+    makeColon(),
+    makeDigit(time[2]),
+    makeDigit(time[3]),
+    makeColon(),
+    makeDigit(time[4]),
+    makeDigit(time[5])
+  );
+
+  document.title =
+    time.slice(0,2) + ":" +
+    time.slice(2,4) + ":" +
+    time.slice(4,6);
+}
+
+drawClock();
+setInterval(drawClock, 250);
+</script>
+</body>
+</html>
